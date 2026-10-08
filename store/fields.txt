@@ -1,0 +1,73 @@
+APP NAME (30)
+ご祝儀袋・香典袋 なぞり書き
+
+HOME SCREEN NAME (CFBundleDisplayName)
+なぞり書き
+
+SUBTITLE (30)
+のし袋の表書き・名前を筆文字でなぞる
+
+BUNDLE ID
+jp.nazorigaki.app
+
+SKU
+nazorigaki-ios-1
+
+CATEGORY
+Primary: ユーティリティ (Utilities) / Secondary: ライフスタイル (Lifestyle, optional)
+
+AGE RATING
+4+
+
+AVAILABILITY / PRICE
+Japan only / Free (with in-app purchase)
+
+KEYWORDS (100)
+書き方,金封,ご祝儀,香典,御霊前,御仏前,薄墨,中袋,金額,大字,住所,連名,結婚式,葬式,法事,お年玉,ポチ袋,お布施,御礼,寸志,筆ペン,手本,練習,冠婚葬祭,美文字,御祝儀袋,寿,快気祝
+
+PROMOTIONAL TEXT (170)
+筆文字が苦手でも大丈夫。用途と名前を選ぶだけで、表書きと名前を実寸の筆文字で大きく表示。紙や短冊を画面に重ねてなぞれば、ご祝儀袋も香典袋もきれいに仕上がります。弔事の薄墨表示にも対応。
+
+SUPPORT URL
+https://cedric1963y-lab.github.io/nazori-gaki/
+
+MARKETING URL (optional)
+https://cedric1963y-lab.github.io/nazori-gaki/
+
+PRIVACY POLICY URL
+https://cedric1963y-lab.github.io/nazori-gaki/privacy.html
+
+COPYRIGHT
+2026 Hayato Suzuki
+
+APP PRIVACY
+Data Not Collected（データの収集なし）
+
+CONTENT RIGHTS
+Does not contain, show, or access third-party content（第三者のコンテンツなし）。書体は SIL OFL 1.1 のフォントを同梱（ライセンスはアプリ内「設定」>「フォントのライセンス」）
+
+IN-APP PURCHASE (Non-Consumable)
+Reference Name: 全機能アンロック
+Product ID: jp.nazorigaki.app.unlock
+Price: ¥300 (Tier: JPY 300)
+Display Name (ja): 全機能アンロック
+Description (ja, 55): 書体追加・連名・中袋の住所と大字の金額・名前の履歴が使えます
+Review screenshot: iap-review-unlock.png (1179x2556, raw simulator)
+Review notes: アプリの「設定」>「全機能アンロック」、またはホーム下部の「全機能アンロック」から購入画面を開けます。買い切りで、購入後は書体4種・連名・中袋（住所・金額の大字）・名前の履歴が解放されます。「購入を復元」ボタンあり。
+
+APP REVIEW NOTES
+アカウント登録・ログインはありません。データは端末内（UserDefaults）にのみ保存し、サーバー通信・広告・トラッキングはありません。
+
+このアプリは、ご祝儀袋・香典袋の表書きと名前を実寸の筆文字で画面に表示し、利用者が袋の短冊や薄い紙を画面に重ねて、上から筆ペンでなぞって書くためのものです（なぞり書き）。表示中は画面の明るさを最大にし、自動ロックを止めます。画面を離れると元に戻ります。
+
+確認手順の例:
+1. ホームで「結婚祝い」を選ぶ
+2. 表書き「寿」を選び、お名前に「鈴木 隼人」と入力して「なぞり書きを始める」
+3. 実寸の縦書きが表示されます。上部の「表書き」「お名前」で切り替え、ドラッグで位置、2本指や −／＋ で大きさを調整できます
+4. 「画面を固定してなぞる」で操作が固定され、長押しで戻ります
+5. ホームの「香典（仏式）」では、初めから薄墨（グレー）で表示されます
+
+アプリ内課金（非消耗型・買い切り）: jp.nazorigaki.app.unlock「全機能アンロック」¥300
+購入画面は、ホーム下部の「全機能アンロック」、「設定」>「全機能アンロック」、または入力画面で鍵マークの付いた機能（書体・連名・中袋）をタップすると開きます。購入するとSandboxで書体4種・連名（3名まで）・中袋の住所と金額の大字変換（例: 30000 → 金参萬圓）・名前の履歴が使えるようになります。購入画面と「設定」に「購入を復元」ボタンがあります。サブスクリプションはありません。
+
+カメラ・写真・位置情報・連絡先などの権限は使いません。

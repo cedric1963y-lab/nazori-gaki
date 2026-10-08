@@ -1,0 +1,48 @@
+name: nazori_gaki
+description: "ご祝儀袋・香典袋の表書きと名前を、実寸の筆文字で表示してなぞり書きするiPhoneアプリ。"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  shared_preferences: ^2.5.6
+  screen_brightness: ^2.1.11
+  wakelock_plus: ^1.8.1
+  url_launcher: ^6.3.3
+  in_app_purchase: ^3.3.1
+  in_app_purchase_storekit: ^0.4.13
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/licenses/
+
+  fonts:
+    - family: YujiSyuku
+      fonts:
+        - asset: assets/fonts/YujiSyuku-Regular.ttf
+    - family: YujiBoku
+      fonts:
+        - asset: assets/fonts/YujiBoku-Regular.ttf
+    - family: YujiMai
+      fonts:
+        - asset: assets/fonts/YujiMai-Regular.ttf
+    - family: ZenKurenaido
+      fonts:
+        - asset: assets/fonts/ZenKurenaido-Regular.ttf
+    - family: KleeOne
+      fonts:
+        - asset: assets/fonts/KleeOne-Regular.ttf
