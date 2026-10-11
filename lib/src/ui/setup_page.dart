@@ -241,7 +241,7 @@ class _SetupPageState extends State<SetupPage> {
               maxLength: 12,
               decoration: InputDecoration(
                 counterText: '',
-                hintText: i == 0 ? '例: 鈴木 隼人' : '${i + 1}人目（左に並びます）',
+                hintText: i == 0 ? '例: 山田 太郎' : '${i + 1}人目（左に並びます）',
                 suffixIcon: i == 0
                     ? null
                     : IconButton(

@@ -55,7 +55,7 @@ Future<void> main() async {
         ..startFor(occasionById('wedding'))
         ..update((d) {
           d.omote = '寿';
-          d.names = ['鈴木 隼人'];
+          d.names = ['山田 太郎'];
         });
       home = const TracePage(initialPage: TracePageKind.name);
     case 'kouden':
@@ -63,7 +63,7 @@ Future<void> main() async {
         ..startFor(occasionById('buddhist'))
         ..update((d) {
           d.omote = '御霊前';
-          d.names = ['鈴木 隼人'];
+          d.names = ['山田 太郎'];
         });
       home = const TracePage(initialPage: TracePageKind.omote);
     case 'unlock':
