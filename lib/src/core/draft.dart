@@ -57,6 +57,13 @@ class Draft extends ChangeNotifier {
   String address = '';
   bool kanjiDigits = true;
   bool guides = true;
+
+  /// のし紙で名字だけを書くか。
+  bool surnameOnly = false;
+
+  /// 会社名・肩書き（全機能）。名前の右に小さく並べる。
+  String company = '';
+  String title = '';
   late String _fontId;
   final Map<TracePageKind, Nudge> _nudges = {};
   double? _ptPerMmOverride;
@@ -113,7 +120,17 @@ class Draft extends ChangeNotifier {
   List<String> namesFor({required bool unlocked}) {
     final filled = names.where((n) => n.trim().isNotEmpty).toList();
     if (filled.isEmpty) return const [];
-    return unlocked ? filled.take(maxNames).toList() : [filled.first];
+    final list = unlocked ? filled.take(maxNames).toList() : [filled.first];
+    if (unlocked && surnameOnly && envelope.noshi) {
+      return [for (final n in list) n.trim().split(RegExp(r'[ 　]+')).first];
+    }
+    return list;
+  }
+
+  /// 名前の右に添える会社名・肩書き（全機能）。
+  String companyLineFor({required bool unlocked}) {
+    if (!unlocked) return '';
+    return [company.trim(), title.trim()].where((e) => e.isNotEmpty).join('　');
   }
 
   String fontFamilyFor({required bool unlocked}) {

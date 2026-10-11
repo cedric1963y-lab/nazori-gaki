@@ -40,6 +40,8 @@ Future<void> main() async {
   final showcase = kDebugMode ? _showcase : '';
   final prefs = await SharedPreferences.getInstance();
   if (showcase.isNotEmpty) await prefs.clear();
+  // のし紙は全機能の画面なので、撮影時だけアンロック済みとして表示する（購入はしない）。
+  if (showcase == 'noshi') await prefs.setBool(unlockedPrefsKey, true);
 
   final draft = Draft(prefs);
   final unlock = UnlockService(
@@ -63,6 +65,15 @@ Future<void> main() async {
         ..startFor(occasionById('buddhist'))
         ..update((d) {
           d.omote = '御霊前';
+          d.names = ['山田 太郎'];
+        });
+      home = const TracePage(initialPage: TracePageKind.omote);
+    case 'noshi':
+      draft
+        ..startFor(occasionById('seibo'))
+        ..setEnvelope('noshiB4')
+        ..update((d) {
+          d.omote = '御歳暮';
           d.names = ['山田 太郎'];
         });
       home = const TracePage(initialPage: TracePageKind.omote);

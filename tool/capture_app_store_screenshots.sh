@@ -30,6 +30,6 @@ shot() { # name scene
 shot 01-purpose home
 shot 02-shugi-name shugi
 shot 03-kouden-usuzumi kouden
-shot 04-unlock unlock
+shot 04-noshi noshi
 shot iap-review-unlock unlock
 echo "saved to $OUT"

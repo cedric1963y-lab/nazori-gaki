@@ -13,6 +13,12 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   void _open(BuildContext context, Occasion o) {
+    if (o.premium && !AppScope.of(context).unlock.unlocked) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const UnlockPage()),
+      );
+      return;
+    }
     AppScope.of(context).draft.startFor(o);
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const SetupPage()),
@@ -87,7 +93,28 @@ class HomePage extends StatelessWidget {
                         ),
                     delegate: SliverChildListDelegate([
                       for (final o in occasions.where((o) => o.group == group))
-                        EnvelopeTile(occasion: o, onTap: () => _open(context, o)),
+                        ListenableBuilder(
+                          listenable: unlock,
+                          builder: (context, _) => Stack(
+                            children: [
+                              Positioned.fill(
+                                child: EnvelopeTile(occasion: o, onTap: () => _open(context, o)),
+                              ),
+                              if (o.premium && !unlock.unlocked)
+                                const Positioned(
+                                  top: 6,
+                                  right: 6,
+                                  child: IgnorePointer(
+                                    child: CircleAvatar(
+                                      radius: 11,
+                                      backgroundColor: Washi.sumi,
+                                      child: Icon(Icons.lock_outline, size: 13, color: Washi.kin),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                     ]),
                   ),
                 ),
@@ -161,7 +188,7 @@ class _UnlockBanner extends StatelessWidget {
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  '全機能アンロック\n書体・連名・中袋の住所と金額（大字）・名前の履歴',
+                  '全機能アンロック\nのし紙・追加の表書き・書体・連名・会社名・中袋・履歴',
                   style: TextStyle(color: Washi.paper, height: 1.5, fontSize: 13.5),
                 ),
               ),

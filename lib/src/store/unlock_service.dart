@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'bridge.dart';
 
-const _unlockedKey = 'unlock.owned';
+const unlockedPrefsKey = 'unlock.owned';
+const _unlockedKey = unlockedPrefsKey;
 
 /// 全機能アンロックの状態。買い切りなので期限はない。
 class UnlockService extends ChangeNotifier {

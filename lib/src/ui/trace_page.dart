@@ -94,7 +94,7 @@ class _TracePageState extends State<TracePage> {
           if (d.envelope.hasNaka) ...[TracePageKind.nakaFront, TracePageKind.nakaBack],
         ];
         if (!pages.contains(_page)) _page = TracePageKind.omote;
-        final pageLocked = _page.needsUnlock && !unlocked;
+        final pageLocked = (_page.needsUnlock || d.envelope.premium || d.occasion.premium) && !unlocked;
         final mm = d.ptPerMm(MediaQuery.devicePixelRatioOf(context));
         final nudge = d.nudge(_page);
         return Scaffold(
@@ -241,8 +241,13 @@ _Layout _layoutFor(
         return _Layout(const [], origin, emptyMessage: 'お名前が入力されていません。\n前の画面で入力してください。');
       }
       final factor = switch (names.length) { 1 => 1.0, 2 => 0.9, _ => 0.8 };
+      final company = d.companyLineFor(unlocked: unlocked);
       return _Layout(
-        [for (final name in names) VColumn(name, sizePx: e.nameMm * factor * s)],
+        [
+          if (company.isNotEmpty)
+            VColumn(company, sizePx: e.nameMm * 0.5 * s, dropPx: e.nameMm * s),
+          for (final name in names) VColumn(name, sizePx: e.nameMm * factor * s),
+        ],
         origin,
         pitch: 1.35,
       );
@@ -496,13 +501,13 @@ class _LockedPage extends StatelessWidget {
             const Icon(Icons.lock_outline, size: 36, color: Washi.kin),
             const SizedBox(height: 12),
             Text(
-              '「${page.label}」は全機能アンロックで使えます',
+              'この内容は全機能アンロックで使えます',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             const Text(
-              '中袋の金額を大字（例: 金参萬圓）で、住所とお名前を縦書きで表示します。',
+              'のし紙・追加の表書き・中袋の金額（大字）や住所を、実寸の縦書きで表示します。',
               textAlign: TextAlign.center,
               style: TextStyle(color: Washi.sumiSoft, height: 1.5),
             ),

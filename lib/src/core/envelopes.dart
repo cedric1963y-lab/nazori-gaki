@@ -9,6 +9,8 @@ class EnvelopeSize {
     this.amountMm,
     this.addressMm,
     this.nakaNameMm,
+    this.premium = false,
+    this.noshi = false,
   });
 
   final String id;
@@ -19,6 +21,12 @@ class EnvelopeSize {
   final double? amountMm;
   final double? addressMm;
   final double? nakaNameMm;
+
+  /// 全機能アンロック限定のサイズか。
+  final bool premium;
+
+  /// 品物に掛けるのし紙（中袋なし）。
+  final bool noshi;
 
   bool get hasNaka => amountMm != null;
 }
@@ -60,6 +68,33 @@ const envelopeSizes = <EnvelopeSize>[
     detail: 'お年玉・心付けの小袋',
     omoteMm: 10,
     nameMm: 7.5,
+  ),
+  EnvelopeSize(
+    id: 'noshiA4',
+    label: 'のし紙（A4）',
+    detail: '菓子折り・タオルなどの箱に掛ける',
+    omoteMm: 30,
+    nameMm: 22,
+    premium: true,
+    noshi: true,
+  ),
+  EnvelopeSize(
+    id: 'noshiB4',
+    label: 'のし紙（B4）',
+    detail: 'お中元・お歳暮の大きめの箱に',
+    omoteMm: 36,
+    nameMm: 26,
+    premium: true,
+    noshi: true,
+  ),
+  EnvelopeSize(
+    id: 'noshiTanzaku',
+    label: '短冊のし',
+    detail: '細長い略式ののし紙',
+    omoteMm: 20,
+    nameMm: 15,
+    premium: true,
+    noshi: true,
   ),
 ];
 

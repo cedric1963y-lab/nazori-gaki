@@ -30,6 +30,8 @@ class _SetupPageState extends State<SetupPage> {
   final List<TextEditingController> _names = [];
   final _amount = TextEditingController();
   final _address = TextEditingController();
+  final _company = TextEditingController();
+  final _title = TextEditingController();
   bool _customOmote = false;
 
   @override
@@ -51,6 +53,8 @@ class _SetupPageState extends State<SetupPage> {
     _custom.dispose();
     _amount.dispose();
     _address.dispose();
+    _company.dispose();
+    _title.dispose();
     for (final c in _names) {
       c.dispose();
     }
@@ -112,6 +116,22 @@ class _SetupPageState extends State<SetupPage> {
                                   d.update((d) => d.omote = t);
                                 },
                               ),
+                            for (final t in o.premiumOmote)
+                              ChoiceChip(
+                                avatar: unlock.unlocked
+                                    ? null
+                                    : const Icon(Icons.lock_outline, size: 14),
+                                label: Text(t),
+                                selected: !_customOmote && d.omote == t,
+                                onSelected: (_) {
+                                  if (!unlock.unlocked) {
+                                    openUnlock(context);
+                                    return;
+                                  }
+                                  setState(() => _customOmote = false);
+                                  d.update((d) => d.omote = t);
+                                },
+                              ),
                             ChoiceChip(
                               label: const Text('自由に入力'),
                               selected: _customOmote,
@@ -150,7 +170,18 @@ class _SetupPageState extends State<SetupPage> {
                           _EnvelopeOption(
                             size: e,
                             selected: d.envelopeId == e.id,
-                            onTap: () => d.setEnvelope(e.id),
+                            locked: e.premium && !unlock.unlocked,
+                            onTap: () => e.premium && !unlock.unlocked
+                                ? openUnlock(context)
+                                : d.setEnvelope(e.id),
+                          ),
+                        if (d.envelope.noshi && unlock.unlocked)
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('名字だけを書く', style: TextStyle(fontSize: 14)),
+                            subtitle: const Text('のし紙は名字のみが一般的です', style: TextStyle(fontSize: 12)),
+                            value: d.surnameOnly,
+                            onChanged: (v) => d.update((d) => d.surnameOnly = v),
                           ),
                       ],
                     ),
@@ -255,6 +286,8 @@ class _SetupPageState extends State<SetupPage> {
               onChanged: (v) => d.setName(i, v),
             ),
           ),
+        _companyEditor(d, unlocked),
+        const SizedBox(height: 8),
         const Text(
           '姓と名の間にスペースを入れると、少し間をあけて表示します。',
           style: TextStyle(fontSize: 12.5, color: Washi.sumiSoft),
@@ -289,6 +322,48 @@ class _SetupPageState extends State<SetupPage> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _companyEditor(Draft d, bool unlocked) {
+    _company.text.isEmpty && d.company.isNotEmpty ? _company.text = d.company : null;
+    _title.text.isEmpty && d.title.isNotEmpty ? _title.text = d.title : null;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: unlocked ? null : () => openUnlock(context),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _company,
+              enabled: unlocked,
+              maxLength: 14,
+              decoration: InputDecoration(
+                counterText: '',
+                labelText: '会社名（任意）',
+                hintText: '例: 山田商事株式会社',
+                prefixIcon: unlocked ? null : const Icon(Icons.lock_outline, size: 16),
+              ),
+              onChanged: (v) => d.update((d) => d.company = v),
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 110,
+            child: TextField(
+              controller: _title,
+              enabled: unlocked,
+              maxLength: 8,
+              decoration: const InputDecoration(
+                counterText: '',
+                labelText: '肩書き',
+                hintText: '例: 代表取締役',
+              ),
+              onChanged: (v) => d.update((d) => d.title = v),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -536,10 +611,12 @@ class _EnvelopeOption extends StatelessWidget {
     required this.size,
     required this.selected,
     required this.onTap,
+    this.locked = false,
   });
 
   final EnvelopeSize size;
   final bool selected;
+  final bool locked;
   final VoidCallback onTap;
 
   @override
@@ -560,6 +637,11 @@ class _EnvelopeOption extends StatelessWidget {
             ),
             child: Row(
               children: [
+                if (locked)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Icon(Icons.lock_outline, size: 16, color: Washi.kin),
+                  ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
