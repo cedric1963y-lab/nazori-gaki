@@ -2,7 +2,7 @@ name: nazori_gaki
 description: "ご祝儀袋・香典袋の表書きと名前を、実寸の筆文字で表示してなぞり書きするiPhoneアプリ。"
 publish_to: 'none'
 
-version: 1.2.0+3
+version: 1.2.1+4
 
 environment:
   sdk: ^3.10.0

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../ads/ad_service.dart';
+import '../ads/ad_visibility.dart';
 import '../ads/banner_strip.dart';
 import '../core/draft.dart';
 import '../store/unlock_service.dart';
@@ -44,9 +45,10 @@ class NazoriApp extends StatelessWidget {
         home: home ?? const HomePage(),
         // 無料版は全画面の下に 50pt の広告帯を固定。画面（なぞり書きのキャンバス含む）はその上に配置する。
         builder: (context, child) => ListenableBuilder(
-          listenable: unlock,
+          listenable: Listenable.merge([unlock, hideAdBanner]),
           builder: (context, _) {
-            if (unlock.unlocked || !ads.enabled) return child!;
+            // 木の形は常に同じにする（帯の出し入れ・購入で Navigator の状態が消えないように）。
+            final show = !unlock.unlocked && ads.enabled && !hideAdBanner.value;
             final mq = MediaQuery.of(context);
             return ColoredBox(
               color: const Color(0xFF2B2F33),
@@ -54,12 +56,14 @@ class NazoriApp extends StatelessWidget {
                 children: [
                   Expanded(
                     child: MediaQuery(
-                      data: mq.removePadding(removeBottom: true).removeViewPadding(removeBottom: true),
+                      data: show
+                          ? mq.removePadding(removeBottom: true).removeViewPadding(removeBottom: true)
+                          : mq,
                       child: child!,
                     ),
                   ),
-                  BannerStrip(ads: ads),
-                  SizedBox(height: mq.viewPadding.bottom),
+                  if (show) BannerStrip(ads: ads),
+                  if (show) SizedBox(height: mq.viewPadding.bottom),
                 ],
               ),
             );

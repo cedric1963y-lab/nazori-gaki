@@ -104,9 +104,12 @@ Future<void> main() async {
       ..startFor(occasionById('wedding'))
       ..update((d) {
         d.omote = '寿';
-        d.names = ['山田 太郎'];
+        d.names = [const String.fromEnvironment('NAME', defaultValue: '山田 太郎')];
       });
-    home = const TracePage(initialPage: TracePageKind.name);
+    home = TracePage(
+      initialPage: TracePageKind.name,
+      startFull: const bool.fromEnvironment('FULL'),
+    );
   }
 
   runApp(NazoriApp(draft: draft, unlock: unlock, ads: ads, home: home));
