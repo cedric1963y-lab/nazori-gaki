@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'src/ads/ad_service.dart';
 import 'src/core/draft.dart';
 import 'src/core/occasions.dart';
 import 'src/store/app_store_bridge.dart';
@@ -18,6 +19,9 @@ import 'src/ui/unlock_page.dart';
 /// （tool/capture_app_store_screenshots.sh）。リリースビルドでは無視される。
 /// home / shugi / kouden / unlock
 const _showcase = String.fromEnvironment('SHOWCASE');
+
+/// デバッグの広告帯確認用（free / paid、+ _trace でなぞり画面）。同意・ATT を出さずに撮影する。
+const _adsShot = String.fromEnvironment('ADS_SHOT');
 
 const _fontLicenses = {
   'Yuji Syuku': 'YujiSyuku',
@@ -43,12 +47,26 @@ Future<void> main() async {
   // のし紙は全機能の画面なので、撮影時だけアンロック済みとして表示する（購入はしない）。
   if (showcase == 'noshi') await prefs.setBool(unlockedPrefsKey, true);
 
+  final adsShot = kDebugMode ? _adsShot : '';
+  if (adsShot.isNotEmpty) {
+    await prefs.clear();
+    if (adsShot.startsWith('paid')) await prefs.setBool(unlockedPrefsKey, true);
+  }
+
   final draft = Draft(prefs);
   final unlock = UnlockService(
     bridge: showcase.isNotEmpty ? ShowcaseBridge() : AppStoreBridge(),
     prefs: prefs,
   );
   unawaited(unlock.start());
+
+  // 無料版だけ広告。ATT の回答は待たずに読み込みを始める。購入・復元で帯ごと消える。
+  final ads = AdService(enabled: showcase.isEmpty, skipPrompts: adsShot.isNotEmpty);
+  if (!unlock.unlocked) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!unlock.unlocked) unawaited(ads.start());
+    });
+  }
 
   Widget? home;
   switch (showcase) {
@@ -81,5 +99,15 @@ Future<void> main() async {
       home = const UnlockPage();
   }
 
-  runApp(NazoriApp(draft: draft, unlock: unlock, home: home));
+  if (adsShot.endsWith('_trace')) {
+    draft
+      ..startFor(occasionById('wedding'))
+      ..update((d) {
+        d.omote = '寿';
+        d.names = ['山田 太郎'];
+      });
+    home = const TracePage(initialPage: TracePageKind.name);
+  }
+
+  runApp(NazoriApp(draft: draft, unlock: unlock, ads: ads, home: home));
 }
