@@ -1,3 +1,4 @@
+import 'src/review/review_prompt.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -112,5 +113,6 @@ Future<void> main() async {
     );
   }
 
+  await ReviewPrompt.recordLaunch();
   runApp(NazoriApp(draft: draft, unlock: unlock, ads: ads, home: home));
 }

@@ -8,6 +8,7 @@ import '../core/occasions.dart';
 import '../widgets/washi_backdrop.dart';
 import 'palette.dart';
 import 'scope.dart';
+import '../review/review_prompt.dart';
 import 'trace_page.dart';
 import 'unlock_page.dart';
 
@@ -73,9 +74,13 @@ class _SetupPageState extends State<SetupPage> {
     FocusScope.of(context).unfocus();
     if (scope.unlock.unlocked) await d.remember();
     if (!mounted) return;
+    final started = DateTime.now();
     await Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const TracePage()),
     );
+    // なぞり画面を閉じた後（全画面・なぞり中ではない）にだけ評価依頼を検討する。
+    if (!mounted) return;
+    await ReviewPrompt.onTraceSessionEnded(DateTime.now().difference(started));
   }
 
   @override
