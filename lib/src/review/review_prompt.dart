@@ -1,4 +1,5 @@
 import 'package:in_app_review/in_app_review.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// App Store の評価ダイアログ（SKStoreReviewController.requestReview）を出す。
@@ -7,10 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - 3回目以降の完了セッションの後、入力画面に戻ったタイミングでだけ依頼
 /// - 1バージョンにつき最大1回。初回起動・なぞり中・全画面中には出さない
 /// - 独自の前置き文や特典は一切なし（Apple 標準ダイアログのみ）
+/// - バージョン判定は CFBundleShortVersionString（PackageInfo.version）を使う
 class ReviewPrompt {
   const ReviewPrompt._();
 
-  static const appVersion = '1.2.2';
   static const minSessionSeconds = 30;
   static const minSessions = 3;
 
@@ -26,6 +27,15 @@ class ReviewPrompt {
     } catch (_) {}
   }
 
+  static Future<String> _shortVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      return info.version;
+    } catch (_) {
+      return '';
+    }
+  }
+
   /// なぞり画面から戻った直後に呼ぶ。
   static Future<void> onTraceSessionEnded(Duration used) async {
     if (used.inSeconds < minSessionSeconds) return;
@@ -35,10 +45,12 @@ class ReviewPrompt {
       await p.setInt(_kSessions, sessions);
       if (sessions < minSessions) return;
       if ((p.getInt(_kLaunches) ?? 0) < 2) return; // 初回起動中は出さない
-      if (p.getString(_kAskedVersion) == appVersion) return;
+      final version = await _shortVersion();
+      if (version.isEmpty) return;
+      if (p.getString(_kAskedVersion) == version) return;
       final r = InAppReview.instance;
       if (!await r.isAvailable()) return;
-      await p.setString(_kAskedVersion, appVersion);
+      await p.setString(_kAskedVersion, version);
       await Future<void>.delayed(const Duration(milliseconds: 800));
       await r.requestReview();
     } catch (_) {}
