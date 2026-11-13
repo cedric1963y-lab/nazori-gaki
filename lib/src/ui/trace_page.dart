@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../ads/ad_visibility.dart';
 import '../core/draft.dart';
 import '../core/kanji.dart';
 import '../widgets/vertical_text.dart';
@@ -15,9 +16,12 @@ import 'setup_page.dart' show openUnlock;
 
 /// 実寸の縦書きを白い画面に出し、紙を重ねてなぞる画面。
 class TracePage extends StatefulWidget {
-  const TracePage({super.key, this.initialPage = TracePageKind.omote});
+  const TracePage({super.key, this.initialPage = TracePageKind.omote, this.startFull = false});
 
   final TracePageKind initialPage;
+
+  /// デバッグ撮影用。
+  final bool startFull;
 
   @override
   State<TracePage> createState() => _TracePageState();
@@ -26,14 +30,28 @@ class TracePage extends StatefulWidget {
 class _TracePageState extends State<TracePage> {
   late TracePageKind _page = widget.initialPage;
   bool _locked = false;
+
+  /// 全画面：広告帯と操作バーを隠して、なぞる面を最大にする。
+  bool _full = false;
+
+  /// 画面に収まらないとき自動で縮小する。false なら実寸のまま（ドラッグでスクロール）。
+  bool _fit = true;
   bool _hint = false;
   Timer? _hintTimer;
+
+  /// 固定解除ボタンを1回押した状態。続けてもう一度押すと解除する（ペン先の誤タッチ対策）。
+  bool _unlockArmed = false;
+  Timer? _armTimer;
   Nudge _startNudge = const Nudge();
 
   @override
   void initState() {
     super.initState();
     unawaited(_enterTraceMode());
+    if (widget.startFull) {
+      _full = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => hideAdBanner.value = true);
+    }
   }
 
   Future<void> _enterTraceMode() async {
@@ -48,9 +66,19 @@ class _TracePageState extends State<TracePage> {
     } catch (_) {}
   }
 
+  void _setFull(bool v) {
+    HapticFeedback.selectionClick();
+    setState(() => _full = v);
+    hideAdBanner.value = v;
+  }
+
   @override
   void dispose() {
+    if (hideAdBanner.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => hideAdBanner.value = false);
+    }
     _hintTimer?.cancel();
+    _armTimer?.cancel();
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     unawaited(WakelockPlus.disable().catchError((_) {}));
     unawaited(
@@ -71,12 +99,29 @@ class _TracePageState extends State<TracePage> {
     });
   }
 
+  /// 固定中は、なぞる面への長押しや指の止まりでは解除しない。
+  /// 右上の「固定中」ボタンを2回続けて押したときだけ解除する。
+  void _onUnlockButton() {
+    if (!_unlockArmed) {
+      HapticFeedback.selectionClick();
+      _armTimer?.cancel();
+      setState(() => _unlockArmed = true);
+      _armTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _unlockArmed = false);
+      });
+      return;
+    }
+    _unlockControls();
+  }
+
   void _unlockControls() {
     HapticFeedback.selectionClick();
     _hintTimer?.cancel();
+    _armTimer?.cancel();
     setState(() {
       _locked = false;
       _hint = false;
+      _unlockArmed = false;
     });
   }
 
@@ -101,13 +146,28 @@ class _TracePageState extends State<TracePage> {
           backgroundColor: Colors.white,
           body: LayoutBuilder(
             builder: (context, box) {
-              final layout = _layoutFor(d, _page, unlocked, mm, nudge, box.biggest);
+              final pad = MediaQuery.paddingOf(context);
+              final bars = !_full && !_locked;
+              // 操作バーの高さ（_TopBar / _BottomBar と合わせる）。固定中もバー表示時と同じ位置に保つ。
+              final topY = _full ? pad.top + 3 * mm : pad.top + 64 + 3 * mm;
+              final bottomH = _full ? pad.bottom + 3 * mm : pad.bottom + 64 + 3 * mm;
+              final avail = box.maxHeight - topY - bottomH;
+              var layout = _layoutFor(d, _page, unlocked, mm, nudge, box.biggest, topY);
+              var fit = 1.0;
+              if (_fit && layout.columns.isNotEmpty) {
+                final h = layout.columns.map(columnHeight).fold(0.0, math.max);
+                if (h > avail && avail > 0) {
+                  fit = avail / h;
+                  layout = _layoutFor(d, _page, unlocked, mm,
+                      nudge.copyWith(scale: nudge.scale * fit), box.biggest, topY);
+                }
+              }
               return Stack(
                 fit: StackFit.expand,
                 children: [
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onLongPress: _locked ? _unlockControls : null,
+                    // 固定中はなぞる面のタッチ（長押し・ドラッグ・ピンチ）をすべて無視する。
                     onScaleStart: _locked ? null : (_) => _startNudge = d.nudge(_page),
                     onScaleUpdate: _locked
                         ? null
@@ -153,7 +213,7 @@ class _TracePageState extends State<TracePage> {
                       ),
                     ),
                   if (pageLocked) _LockedPage(page: _page),
-                  if (!_locked) ...[
+                  if (bars) ...[
                     _TopBar(
                       pages: pages,
                       current: _page,
@@ -162,6 +222,11 @@ class _TracePageState extends State<TracePage> {
                     ),
                     _BottomBar(
                       scale: nudge.scale,
+                      shown: nudge.scale * fit,
+                      fitted: fit < 1,
+                      fitOn: _fit,
+                      onFit: () => setState(() => _fit = !_fit),
+                      onFull: () => _setFull(true),
                       guides: d.guides,
                       onScale: (v) => d.setNudge(_page, nudge.copyWith(scale: v)),
                       onReset: () => d.resetNudge(_page),
@@ -169,6 +234,39 @@ class _TracePageState extends State<TracePage> {
                       onLock: _lock,
                     ),
                   ],
+                  if (_full)
+                    Positioned(
+                      top: pad.top + 6,
+                      right: 10,
+                      child: FilledButton.tonalIcon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Washi.sumi.withValues(alpha: 0.85),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 40),
+                        ),
+                        onPressed: () => _setFull(false),
+                        icon: const Icon(Icons.fullscreen_exit, size: 20),
+                        label: const Text('全画面を終了'),
+                      ),
+                    ),
+                  if (_locked)
+                    Positioned(
+                      // 操作バーがあった帯（文字より上）に置くので、なぞる面とは重ならない。
+                      top: pad.top + 6,
+                      right: 10,
+                      child: FilledButton.tonalIcon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _unlockArmed
+                              ? Washi.shu.withValues(alpha: 0.9)
+                              : Washi.sumi.withValues(alpha: 0.55),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 40),
+                        ),
+                        onPressed: _onUnlockButton,
+                        icon: Icon(_unlockArmed ? Icons.lock_open : Icons.lock_outline, size: 18),
+                        label: Text(_unlockArmed ? 'もう一度押すと解除' : '固定中'),
+                      ),
+                    ),
                   if (_locked)
                     Positioned(
                       left: 0,
@@ -186,7 +284,7 @@ class _TracePageState extends State<TracePage> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Text(
-                                '画面を固定しました。長押しで操作に戻ります',
+                                '画面を固定しました。右上の「固定中」を2回押すと操作に戻ります',
                                 style: TextStyle(color: Colors.white, fontSize: 13),
                               ),
                             ),
@@ -212,7 +310,7 @@ class _Layout {
   final String emptyMessage;
 }
 
-const _topMarginMm = 22.0;
+const _topMarginMm = 22.0; // 住所の折り返し計算用
 
 _Layout _layoutFor(
   Draft d,
@@ -221,12 +319,13 @@ _Layout _layoutFor(
   double mm,
   Nudge n,
   Size screen,
+  double topY,
 ) {
   final e = d.envelope;
   final s = n.scale * mm;
   final origin = Offset(
     screen.width / 2 + n.dxMm * mm,
-    _topMarginMm * mm + n.dyMm * mm,
+    topY + n.dyMm * mm,
   );
   switch (page) {
     case TracePageKind.omote:
@@ -390,77 +489,109 @@ class _TopBar extends StatelessWidget {
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.scale,
+    required this.shown,
+    required this.fitted,
+    required this.fitOn,
     required this.guides,
     required this.onScale,
     required this.onReset,
     required this.onGuides,
+    required this.onFit,
+    required this.onFull,
     required this.onLock,
   });
 
   final double scale;
+  final double shown;
+  final bool fitted;
+  final bool fitOn;
   final bool guides;
   final ValueChanged<double> onScale;
   final VoidCallback onReset;
   final VoidCallback onGuides;
+  final VoidCallback onFit;
+  final VoidCallback onFull;
   final VoidCallback onLock;
 
   @override
   Widget build(BuildContext context) {
+    const dense = VisualDensity.compact;
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
         color: Washi.paper.withValues(alpha: 0.94),
         child: SafeArea(
           top: false,
-          minimum: const EdgeInsets.only(bottom: 8),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _RoundIcon(
-                      icon: Icons.remove,
-                      tooltip: '小さく',
-                      onTap: () => onScale((scale - 0.02).clamp(0.5, 1.6)),
+          child: SizedBox(
+            height: 64,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              child: Row(
+                children: [
+                  _RoundIcon(
+                    icon: Icons.remove,
+                    tooltip: '小さく',
+                    onTap: () => onScale((scale - 0.02).clamp(0.5, 1.6)),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${(shown * 100).round()}%',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        ),
+                        if (fitted)
+                          const Text('自動縮小', style: TextStyle(fontSize: 9, color: Washi.sumiSoft)),
+                      ],
                     ),
-                    SizedBox(
-                      width: 64,
-                      child: Text(
-                        '${(scale * 100).round()}%',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  _RoundIcon(
+                    icon: Icons.add,
+                    tooltip: '大きく',
+                    onTap: () => onScale((scale + 0.02).clamp(0.5, 1.6)),
+                  ),
+                  IconButton(
+                    visualDensity: dense,
+                    tooltip: '実寸・中央に戻す',
+                    icon: const Icon(Icons.restart_alt),
+                    onPressed: onReset,
+                  ),
+                  IconButton(
+                    visualDensity: dense,
+                    tooltip: fitOn ? '画面に合わせる（オン）' : '実寸で表示（ドラッグで移動）',
+                    icon: Icon(fitOn ? Icons.fit_screen : Icons.crop_free),
+                    color: fitOn ? Washi.shu : Washi.sumiSoft,
+                    onPressed: onFit,
+                  ),
+                  IconButton(
+                    visualDensity: dense,
+                    tooltip: 'ものさしと中心線',
+                    icon: const Icon(Icons.straighten),
+                    color: guides ? Washi.shu : Washi.sumiSoft,
+                    onPressed: onGuides,
+                  ),
+                  IconButton(
+                    visualDensity: dense,
+                    tooltip: '全画面',
+                    icon: const Icon(Icons.fullscreen),
+                    onPressed: onFull,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        minimumSize: const Size(0, 44),
                       ),
+                      onPressed: onLock,
+                      icon: const Icon(Icons.lock_outline, size: 18),
+                      label: const FittedBox(child: Text('固定')),
                     ),
-                    _RoundIcon(
-                      icon: Icons.add,
-                      tooltip: '大きく',
-                      onTap: () => onScale((scale + 0.02).clamp(0.5, 1.6)),
-                    ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      tooltip: '実寸・中央に戻す',
-                      icon: const Icon(Icons.restart_alt),
-                      onPressed: onReset,
-                    ),
-                    IconButton(
-                      tooltip: 'ものさしと中心線',
-                      icon: const Icon(Icons.straighten),
-                      color: guides ? Washi.shu : Washi.sumiSoft,
-                      onPressed: onGuides,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                  onPressed: onLock,
-                  icon: const Icon(Icons.lock_outline, size: 20),
-                  label: const Text('画面を固定してなぞる'),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -478,6 +609,7 @@ class _RoundIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton.outlined(
+      visualDensity: VisualDensity.compact,
       tooltip: tooltip,
       onPressed: onTap,
       icon: Icon(icon, size: 20),

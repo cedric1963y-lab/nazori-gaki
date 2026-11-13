@@ -38,7 +38,7 @@ class UnlockPage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                '買い切りです。月額や年額の支払い（サブスクリプション）はありません。広告もありません。',
+                '買い切りです。月額や年額の支払い（サブスクリプション）はありません。購入後は広告も表示されません。',
                 style: TextStyle(color: Washi.sumiSoft, height: 1.6),
               ),
               const SizedBox(height: 18),
