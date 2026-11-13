@@ -38,6 +38,10 @@ class _TracePageState extends State<TracePage> {
   bool _fit = true;
   bool _hint = false;
   Timer? _hintTimer;
+
+  /// 固定解除ボタンを1回押した状態。続けてもう一度押すと解除する（ペン先の誤タッチ対策）。
+  bool _unlockArmed = false;
+  Timer? _armTimer;
   Nudge _startNudge = const Nudge();
 
   @override
@@ -74,6 +78,7 @@ class _TracePageState extends State<TracePage> {
       WidgetsBinding.instance.addPostFrameCallback((_) => hideAdBanner.value = false);
     }
     _hintTimer?.cancel();
+    _armTimer?.cancel();
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     unawaited(WakelockPlus.disable().catchError((_) {}));
     unawaited(
@@ -94,12 +99,29 @@ class _TracePageState extends State<TracePage> {
     });
   }
 
+  /// 固定中は、なぞる面への長押しや指の止まりでは解除しない。
+  /// 右上の「固定中」ボタンを2回続けて押したときだけ解除する。
+  void _onUnlockButton() {
+    if (!_unlockArmed) {
+      HapticFeedback.selectionClick();
+      _armTimer?.cancel();
+      setState(() => _unlockArmed = true);
+      _armTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _unlockArmed = false);
+      });
+      return;
+    }
+    _unlockControls();
+  }
+
   void _unlockControls() {
     HapticFeedback.selectionClick();
     _hintTimer?.cancel();
+    _armTimer?.cancel();
     setState(() {
       _locked = false;
       _hint = false;
+      _unlockArmed = false;
     });
   }
 
@@ -145,7 +167,7 @@ class _TracePageState extends State<TracePage> {
                 children: [
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onLongPress: _locked ? _unlockControls : null,
+                    // 固定中はなぞる面のタッチ（長押し・ドラッグ・ピンチ）をすべて無視する。
                     onScaleStart: _locked ? null : (_) => _startNudge = d.nudge(_page),
                     onScaleUpdate: _locked
                         ? null
@@ -229,6 +251,24 @@ class _TracePageState extends State<TracePage> {
                     ),
                   if (_locked)
                     Positioned(
+                      // 操作バーがあった帯（文字より上）に置くので、なぞる面とは重ならない。
+                      top: pad.top + 6,
+                      right: 10,
+                      child: FilledButton.tonalIcon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _unlockArmed
+                              ? Washi.shu.withValues(alpha: 0.9)
+                              : Washi.sumi.withValues(alpha: 0.55),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 40),
+                        ),
+                        onPressed: _onUnlockButton,
+                        icon: Icon(_unlockArmed ? Icons.lock_open : Icons.lock_outline, size: 18),
+                        label: Text(_unlockArmed ? 'もう一度押すと解除' : '固定中'),
+                      ),
+                    ),
+                  if (_locked)
+                    Positioned(
                       left: 0,
                       right: 0,
                       bottom: 40,
@@ -244,7 +284,7 @@ class _TracePageState extends State<TracePage> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Text(
-                                '画面を固定しました。長押しで操作に戻ります',
+                                '画面を固定しました。右上の「固定中」を2回押すと操作に戻ります',
                                 style: TextStyle(color: Colors.white, fontSize: 13),
                               ),
                             ),
