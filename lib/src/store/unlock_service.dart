@@ -47,7 +47,9 @@ class UnlockService extends ChangeNotifier {
         _message = e.restored ? '購入を復元しました。すべての機能が使えます。' : 'ありがとうございます。すべての機能が使えるようになりました。';
         unawaited(_setUnlocked());
       case StoreEventKind.pending:
-        _message = '購入の承認を待っています。';
+        // 承認待ち（ファミリー共有の「承認と購入のリクエスト」など）でボタンが押せないままにならないように。
+        _busy = false;
+        _message = '購入の承認を待っています。承認されると自動ですべての機能が使えるようになります。';
         notifyListeners();
       case StoreEventKind.canceled:
         _busy = false;

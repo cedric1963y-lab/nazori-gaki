@@ -535,16 +535,21 @@ class _BottomBar extends StatelessWidget {
                   ),
                   SizedBox(
                     width: 50,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${(shown * 100).round()}%',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                        ),
-                        if (fitted)
-                          const Text('自動縮小', style: TextStyle(fontSize: 9, color: Washi.sumiSoft)),
-                      ],
+                    // 文字を大きくしていても、帯の中に収まるように縮めて表示する。
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${(shown * 100).round()}%',
+                            maxLines: 1,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          ),
+                          if (fitted)
+                            const Text('自動縮小', maxLines: 1, style: TextStyle(fontSize: 9, color: Washi.sumiSoft)),
+                        ],
+                      ),
                     ),
                   ),
                   _RoundIcon(
@@ -625,7 +630,7 @@ class _LockedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,

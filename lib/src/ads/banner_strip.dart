@@ -14,44 +14,65 @@ class BannerStrip extends StatefulWidget {
   State<BannerStrip> createState() => _BannerStripState();
 }
 
-class _BannerStripState extends State<BannerStrip> {
+class _BannerStripState extends State<BannerStrip> with WidgetsBindingObserver {
   BannerAd? _ad;
   bool _loaded = false;
+
+  /// 続けて失敗した回数。間隔をのばしながら最大4回まで読み直し、
+  /// それでもだめならアプリを開き直したときにもう一度だけ試す（裏で読み込みを繰り返し続けない）。
+  int _failures = 0;
+  static const _maxRetries = 4;
+  bool _retryScheduled = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.ads.addListener(_maybeLoad);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeLoad());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.ads.removeListener(_maybeLoad);
     _ad?.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _ad == null && !_retryScheduled && _failures > _maxRetries) {
+      _failures = _maxRetries; // 開き直したときは1回だけ読み直す
+      _maybeLoad();
+    }
+  }
+
   void _maybeLoad() {
     if (!widget.ads.ready || _ad != null || !mounted) return;
+    if (_failures > _maxRetries) return;
     final ad = BannerAd(
       adUnitId: AdIds.banner,
       size: AdSize.banner,
       request: widget.ads.request(),
       listener: BannerAdListener(
         onAdLoaded: (_) {
+          _failures = 0;
           if (mounted) setState(() => _loaded = true);
         },
         onAdFailedToLoad: (failed, error) {
           debugPrint('banner failed: ${error.message}');
           failed.dispose();
-          if (mounted) {
-            setState(() {
-              _ad = null;
-              _loaded = false;
+          _ad = null;
+          _failures++;
+          if (mounted) setState(() => _loaded = false);
+          if (_failures <= _maxRetries) {
+            _retryScheduled = true;
+            Future<void>.delayed(Duration(seconds: 30 * (1 << (_failures - 1))), () {
+              _retryScheduled = false;
+              _maybeLoad();
             });
           }
-          Future<void>.delayed(const Duration(seconds: 45), _maybeLoad);
         },
       ),
     );

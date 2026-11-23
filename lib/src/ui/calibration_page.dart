@@ -27,11 +27,15 @@ class _CalibrationPageState extends State<CalibrationPage> {
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: Text(
-                'キャッシュカードやポイントカード（85.6×54mm）を枠に重ね、ぴったり合うように −／＋ で調整してください。',
-                style: TextStyle(height: 1.55),
+            // 文字を大きくしているときは説明文だけスクロールさせて、カードの枠を実寸のまま残す。
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 130),
+              child: const SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Text(
+                  'キャッシュカードやポイントカード（85.6×54mm）を枠に重ね、ぴったり合うように −／＋ で調整してください。',
+                  style: TextStyle(height: 1.55),
+                ),
               ),
             ),
             Expanded(
