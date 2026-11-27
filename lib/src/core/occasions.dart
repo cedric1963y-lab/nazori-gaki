@@ -36,11 +36,12 @@ class Occasion {
 }
 
 const groupCelebration = 'お祝い';
+const groupHagaki = '年賀状・はがき';
 const groupCondolence = 'お悔やみ・法要';
 const groupSeasonal = '季節の贈答・のし紙';
 const groupOther = 'お礼・お見舞い・そのほか';
 
-const occasionGroups = [groupCelebration, groupSeasonal, groupCondolence, groupOther];
+const occasionGroups = [groupCelebration, groupHagaki, groupSeasonal, groupCondolence, groupOther];
 
 const occasions = <Occasion>[
   Occasion(
@@ -79,12 +80,43 @@ const occasions = <Occasion>[
   ),
   Occasion(
     id: 'otoshidama',
-    label: 'お年玉',
+    label: 'お年玉袋',
     group: groupCelebration,
     mood: Mood.celebration,
-    omote: ['お年玉', '御年玉'],
+    omote: ['お年玉', '御年玉', '迎春'],
     note: 'ポチ袋の表にはあげる子の名前、裏に自分の名前を書くことが多いです。',
     envelopeId: 'pochi',
+  ),
+  Occasion(
+    id: 'nengajo',
+    label: '年賀状',
+    group: groupHagaki,
+    mood: Mood.celebration,
+    omote: ['賀正', '迎春', '謹賀新年', '寿'],
+    premiumOmote: ['賀春', '新春', '恭賀新年', '頌春'],
+    note: '官製はがきを画面に重ねて、あいさつ側の表書きと名前をなぞります。余白に合わせて大きさを調整してください。',
+    envelopeId: 'hagaki',
+  ),
+  Occasion(
+    id: 'mochu',
+    label: '喪中はがき',
+    group: groupHagaki,
+    mood: Mood.condolence,
+    omote: ['喪中', '年賀欠礼'],
+    premiumOmote: ['喪中欠礼', '年始欠礼'],
+    note: '喪中はがきは薄墨で書くこともあります。長い文は「自由に入力」か、画面上で小さく調整できます。',
+    usuzumi: true,
+    envelopeId: 'hagaki',
+  ),
+  Occasion(
+    id: 'kanchu',
+    label: '寒中見舞い',
+    group: groupHagaki,
+    mood: Mood.neutral,
+    omote: ['寒中御見舞', '寒中お見舞'],
+    premiumOmote: ['余寒御見舞', '寒中伺'],
+    note: '松の内のあと、または喪中で年賀状を出さなかった方へ。はがきを画面に重ねてなぞります。',
+    envelopeId: 'hagaki',
   ),
   Occasion(
     id: 'uchiiwai',

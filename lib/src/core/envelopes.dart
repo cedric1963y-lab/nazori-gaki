@@ -70,6 +70,13 @@ const envelopeSizes = <EnvelopeSize>[
     nameMm: 7.5,
   ),
   EnvelopeSize(
+    id: 'hagaki',
+    label: 'はがき（官製）',
+    detail: '年賀状・喪中はがき・寒中見舞い（100×148mm）',
+    omoteMm: 22,
+    nameMm: 12,
+  ),
+  EnvelopeSize(
     id: 'noshiA4',
     label: 'のし紙（A4）',
     detail: '菓子折り・タオルなどの箱に掛ける',

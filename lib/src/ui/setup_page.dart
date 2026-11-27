@@ -18,7 +18,7 @@ void openUnlock(BuildContext context) {
   );
 }
 
-/// 表書き・名前・袋の大きさ・墨の色・書体・中袋を決める画面。
+/// 表書き・名前・袋やはがきの大きさ・墨の色・書体・中袋を決める画面。
 class SetupPage extends StatefulWidget {
   const SetupPage({super.key});
 
@@ -168,7 +168,7 @@ class _SetupPageState extends State<SetupPage> {
                     child: _namesEditor(d, unlock.unlocked),
                   ),
                   _Section(
-                    title: '袋の大きさ',
+                    title: '袋・用紙の大きさ',
                     child: Column(
                       children: [
                         for (final e in envelopeSizes)
